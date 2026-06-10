@@ -7,9 +7,6 @@ on:
       pr:
         description: 'Pull Request number'
         required: true
-      tag:
-        description: 'Image tag to push (e.g. ghcr.io/owner/llama-cpp:cuda12-pr24423)'
-        required: true
       target:
         description: 'Build target (full, light, server)'
         default: 'full'
@@ -44,9 +41,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Determine image metadata
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE_REPO="ghcr.io/${{ github.repository_owner }}/llama-cpp"
+          PR_NUM="${{ github.event.inputs.pr }}"
+          TARGET="${{ github.event.inputs.target }}"
+          
+          # Generate dynamic tag: e.g., ghcr.io/owner/llama-cpp:full-pr24423
+          # We include the target in the name as requested.
+          TAG="${IMAGE_REPO}:${TARGET}-pr${PR_NUM}"
+          
+          echo "image_repo=$IMAGE_REPO" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
       - name: Get build date
         id: build_date
-        run: echo "date=$(date -u +\"%Y-%m-%dT%H:%M:%SZ\")" >> \"$GITHUB_OUTPUT\"
+        run: echo "date=$(date -u +\"%Y-%m-%dT%H:%M:%SZ\")" >> "$GITHUB_OUTPUT"
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
@@ -54,7 +67,7 @@ jobs:
           context: llama.cpp
           file: llama.cpp/.devops/cuda.Dockerfile
           target: ${{ github.event.inputs.target }}
-          tags: ${{ github.event.inputs.tag }}
+          tags: ${{ steps.meta.outputs.tag }}
           push: true
           provenance: false
           build-args: |
@@ -66,3 +79,5 @@ jobs:
             CUDA_VERSION=12.8.1
             UBUNTU_VERSION=24.04
             CUDA_DOCKER_ARCH=86;89;90
+          cache-from: type=registry,ref=${{ steps.meta.outputs.image_repo }}:buildcache-${{ github.event.inputs.target }}-amd64
+          cache-to: type=registry,ref=${{ steps.meta.outputs.image_repo }}:buildcache-${{ github.event.inputs.target }}-amd64,mode=max
