@@ -1,8 +1,7 @@
 # Builds and pushes llama.cpp CUDA Docker images for the release tag recorded
 # in last_release_version.txt.
 #
-# Triggered by a push to main that changes last_release_version.txt — normally
-# the commit made by the Windmill watcher (windmill/f/llama_watcher/check_release.py).
+# Triggered by any push to main.
 #
 # Requirements on the Woodpecker side:
 #   - Secrets: ghcr_username, ghcr_token (PAT with write:packages).
@@ -10,7 +9,6 @@
 when:
   - event: push
     branch: main
-    path: last_release_version.txt
 
 matrix:
   include:
