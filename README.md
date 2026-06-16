@@ -33,7 +33,7 @@ If a build fails, the version file is already committed, so the watcher will not
 
 ### Woodpecker
 
-1. Enable this repository in Woodpecker and mark it **trusted** (the build steps mount `/var/run/docker.sock`).
+1. Enable this repository in Woodpecker.
 2. Add repository secrets:
    | Secret | Description |
    | :--- | :--- |
