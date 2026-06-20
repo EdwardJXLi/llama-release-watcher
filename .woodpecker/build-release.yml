@@ -11,6 +11,11 @@ when:
     branch: main
   - event: manual
 
+# CUDA images target x86 GPUs and Kaniko runs RUN steps natively, so pin the
+# whole workflow to amd64 agents (which advertise platform=linux/amd64).
+labels:
+  platform: linux/amd64
+
 matrix:
   include:
     - CUDA_SUFFIX: cuda12
