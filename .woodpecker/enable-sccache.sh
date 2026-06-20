@@ -56,9 +56,12 @@ awk '
     next
   }
 
-  # Route every compiler invocation through sccache.
+  # Route C/C++ compilation through sccache. CUDA/nvcc is deliberately left to
+  # compile directly: sccache mishandles the nvcc multi-stage, multi-arch build
+  # (the fatbinary step fails to find the intermediate .ptx). The CPU backend
+  # variants are C/C++ and dominate the build, so this keeps most of the win.
   /-DLLAMA_BUILD_TESTS=OFF/ {
-    sub(/-DLLAMA_BUILD_TESTS=OFF/, "-DLLAMA_BUILD_TESTS=OFF -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache -DCMAKE_CUDA_COMPILER_LAUNCHER=sccache")
+    sub(/-DLLAMA_BUILD_TESTS=OFF/, "-DLLAMA_BUILD_TESTS=OFF -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache")
   }
 
   # Print cache hit/miss stats once the build finishes.
