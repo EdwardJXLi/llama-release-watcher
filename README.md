@@ -70,6 +70,7 @@ Create a Windmill scheduled script from `.windmill/check_release.py` with cron `
 | `repo_ssh_url` | SSH clone URL of this repo | `git@github.com:EdwardJXLi/llama-release-watcher.git` |
 | `branch` | Branch to commit to | `main` |
 | `github_token` | Optional token to raise GitHub API rate limits | (none) |
+| `discord_webhook_url` | Optional Discord webhook URL for new-release notifications, for example from `$var:f/llama_watcher/discord_webhook_url` | (none) |
 
 ## Image Tagging Convention
 

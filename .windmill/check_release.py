@@ -13,11 +13,41 @@ UPSTREAM_REPO = "ggerganov/llama.cpp"
 VERSION_FILE = "last_release_version.txt"
 
 
+def notify_discord(webhook_url: str, release_tag: str, repo_ssh_url: str, branch: str) -> None:
+    webhook_url = webhook_url.strip()
+    if not webhook_url:
+        return
+
+    message = "\n".join(
+        [
+            f"New llama.cpp release detected: {release_tag}",
+            "",
+            "The watcher updated `last_release_version.txt` and pushed to the build branch.",
+            f"Upstream release: https://github.com/{UPSTREAM_REPO}/releases/tag/{release_tag}",
+            f"Repository: `{repo_ssh_url}`",
+            f"Branch: `{branch}`",
+        ]
+    )
+    print("Sending Discord notification.")
+    response = requests.post(
+        webhook_url,
+        json={
+            "username": "llama-release-watcher",
+            "content": message,
+            "allowed_mentions": {"parse": []},
+        },
+        timeout=30,
+    )
+    response.raise_for_status()
+    print("Discord notification sent.")
+
+
 def main(
     deploy_key: str,
     repo_ssh_url: str = "git@github.com:EdwardJXLi/llama-release-watcher.git",
     branch: str = "main",
     github_token: str = "",
+    discord_webhook_url: str = "",
 ):
     headers = {"Accept": "application/vnd.github+json"}
     if github_token:
@@ -77,5 +107,6 @@ def main(
         git("add", VERSION_FILE)
         git("commit", "-m", f"chore: update last seen release version to {latest_tag}")
         git("push", "origin", branch)
+        notify_discord(discord_webhook_url, latest_tag, repo_ssh_url, branch)
 
     return {"new_release": True, "release_tag": latest_tag}
