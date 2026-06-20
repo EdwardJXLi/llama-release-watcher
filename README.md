@@ -43,6 +43,23 @@ If a build fails, the version file is already committed, so the watcher will not
 
 Images are pushed to `<docker_registry>/llama-cpp`.
 
+#### Compile caching (sccache) — optional
+
+Builds can route C/C++/CUDA compilation through [sccache](https://github.com/mozilla/sccache) backed by any S3-compatible store, so compilation is cached across runs even when Kaniko's layer cache misses (which it does on every new release tag). The upstream `cuda.Dockerfile` is patched in place at build time by `.woodpecker/enable-sccache.sh` — no fork is maintained.
+
+This is **entirely opt-in and configured via secrets** — nothing is hardcoded. sccache is enabled only when all four of the following are set; leave them unset and the build runs without it:
+
+   | Secret | Description |
+   | :--- | :--- |
+   | `sccache_bucket` | Bucket name for the cache |
+   | `sccache_endpoint` | S3 endpoint host (e.g. `s3.example.com`) |
+   | `aws_access_key_id` | Access key for the bucket |
+   | `aws_secret_access_key` | Secret key for the bucket |
+
+Optional knobs: `sccache_region` (default `auto`) and `sccache_s3_use_ssl` (default `true`). Cache objects are namespaced per CUDA toolchain under the `llama-cpp/<cuda_suffix>` key prefix.
+
+Note: Kaniko has no build-time secret mounts, so the credentials are passed as build args and therefore persist in the (private) build-stage cache layers — use a least-privilege, rotatable key scoped to the cache bucket. The published `server` image is a separate build stage and does not contain them.
+
 ### Windmill
 
 Create a Windmill scheduled script from `.windmill/check_release.py` with cron `0 */5 * * * *` (Windmill cron includes a leading seconds field). Script arguments:
