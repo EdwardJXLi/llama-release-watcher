@@ -25,9 +25,11 @@ matrix:
       CUDA_VERSION: 12.8.1
       # cuda12 is also published under the unsuffixed "server-cuda" alias.
       ALIAS_TAG: server-cuda
-    - CUDA_SUFFIX: cuda13
-      CUDA_VERSION: 13.3.0
-      ALIAS_TAG: ''
+    # cuda13 is disabled for now (CUDA 13 breaks sccache nvcc caching, and the
+    # CUDA 13 image is not currently needed). Re-enable by uncommenting.
+    # - CUDA_SUFFIX: cuda13
+    #   CUDA_VERSION: 13.3.0
+    #   ALIAS_TAG: ''
 
 steps:
   prepare-source:
