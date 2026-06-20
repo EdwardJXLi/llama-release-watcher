@@ -125,7 +125,7 @@ steps:
       target: server
       extra_opts: --custom-platform=linux/amd64
       cache: true
-      cache_repo: llama-cpp/buildcache-$CUDA_SUFFIX-amd64
+      cache_repo: llama-cpp/buildcache-${CUDA_SUFFIX}-amd64
       env_file: .kaniko.env
       build_args_from_env:
         - BUILD_DATE
