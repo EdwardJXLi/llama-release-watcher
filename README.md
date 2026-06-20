@@ -58,7 +58,7 @@ This is **entirely opt-in and configured via secrets** — nothing is hardcoded.
 
 Optional knobs: `SCCACHE_REGION` (default `auto`) and `SCCACHE_S3_USE_SSL` (default `true`). Cache objects are namespaced per CUDA toolchain under the `llama-cpp/<cuda_suffix>` key prefix.
 
-Note: Kaniko has no build-time secret mounts, so the credentials are passed as build args and therefore persist in the (private) build-stage cache layers — use a least-privilege, rotatable key scoped to the cache bucket. The published `server` image is a separate build stage and does not contain them.
+Note: Kaniko has no build-time secret mounts, so the credentials transit the build's `.kaniko.env` file and are passed as build args, persisting in the (private) build-stage cache layers — use a least-privilege, rotatable key scoped to the cache bucket. The published `server` image is a separate build stage and does not contain them.
 
 ### Windmill
 

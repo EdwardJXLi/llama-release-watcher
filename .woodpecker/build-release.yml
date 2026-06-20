@@ -78,34 +78,40 @@ steps:
         } > .kaniko.env
 
         # sccache is opt-in. Enable it only when a bucket, endpoint and S3
-        # credentials are all configured as secrets; otherwise the upstream
-        # Dockerfile is left untouched and the build runs without it.
+        # credentials are all configured as secrets; otherwise leave the
+        # upstream Dockerfile untouched and build without it. Every build arg
+        # below is always written to .kaniko.env (empty when disabled) so the
+        # Kaniko plugin never fails on an unset variable.
+        SCCACHE_VERSION=""
+        SCCACHE_S3_KEY_PREFIX=""
         if [ -n "${SCCACHE_BUCKET:-}" ] && [ -n "${SCCACHE_ENDPOINT:-}" ] \
            && [ -n "${AWS_ACCESS_KEY_ID:-}" ] && [ -n "${AWS_SECRET_ACCESS_KEY:-}" ]; then
           echo "==> sccache enabled (bucket=$SCCACHE_BUCKET endpoint=$SCCACHE_ENDPOINT)"
           sh .woodpecker/enable-sccache.sh llama.cpp/.devops/cuda.Dockerfile
-          {
-            echo "SCCACHE_VERSION=0.10.0"
-            echo "SCCACHE_BUCKET=$SCCACHE_BUCKET"
-            echo "SCCACHE_ENDPOINT=$SCCACHE_ENDPOINT"
-            echo "SCCACHE_REGION=${SCCACHE_REGION:-auto}"
-            echo "SCCACHE_S3_USE_SSL=${SCCACHE_S3_USE_SSL:-true}"
-            # Namespace per CUDA toolchain so cuda12/cuda13 objects never collide.
-            echo "SCCACHE_S3_KEY_PREFIX=llama-cpp/$CUDA_SUFFIX"
-          } >> .kaniko.env
+          SCCACHE_VERSION=0.10.0
+          SCCACHE_REGION="${SCCACHE_REGION:-auto}"
+          SCCACHE_S3_USE_SSL="${SCCACHE_S3_USE_SSL:-true}"
+          # Namespace per CUDA toolchain so cuda12/cuda13 objects never collide.
+          SCCACHE_S3_KEY_PREFIX="llama-cpp/$CUDA_SUFFIX"
         else
           echo "==> sccache disabled (set SCCACHE_BUCKET, SCCACHE_ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY to enable)"
+          SCCACHE_BUCKET=""; SCCACHE_ENDPOINT=""; SCCACHE_REGION=""; SCCACHE_S3_USE_SSL=""
+          AWS_ACCESS_KEY_ID=""; AWS_SECRET_ACCESS_KEY=""
         fi
+
+        {
+          echo "SCCACHE_VERSION=${SCCACHE_VERSION:-}"
+          echo "SCCACHE_BUCKET=${SCCACHE_BUCKET:-}"
+          echo "SCCACHE_ENDPOINT=${SCCACHE_ENDPOINT:-}"
+          echo "SCCACHE_REGION=${SCCACHE_REGION:-}"
+          echo "SCCACHE_S3_USE_SSL=${SCCACHE_S3_USE_SSL:-}"
+          echo "SCCACHE_S3_KEY_PREFIX=${SCCACHE_S3_KEY_PREFIX:-}"
+          echo "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}"
+          echo "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}"
+        } >> .kaniko.env
 
   build-and-push:
     image: woodpeckerci/plugin-kaniko
-    environment:
-      # S3 credentials for the sccache backend (empty when sccache is disabled).
-      # Kaniko has no secret mounts, so these reach the build as build args.
-      AWS_ACCESS_KEY_ID:
-        from_secret: AWS_ACCESS_KEY_ID
-      AWS_SECRET_ACCESS_KEY:
-        from_secret: AWS_SECRET_ACCESS_KEY
     settings:
       registry:
         from_secret: DOCKER_REGISTRY
