@@ -51,7 +51,8 @@ awk '
     print "    && tar -xzf /tmp/sccache.tar.gz -C /tmp \\"
     print "    && install -m0755 \"/tmp/sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl/sccache\" /usr/local/bin/sccache \\"
     print "    && rm -rf /tmp/sccache.tar.gz \"/tmp/sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl\" \\"
-    print "    && sccache --version"
+    print "    && sccache --version \\"
+    print "    && echo \"==> sccache enabled: bucket=${SCCACHE_BUCKET} endpoint=${SCCACHE_ENDPOINT} region=${SCCACHE_REGION} ssl=${SCCACHE_S3_USE_SSL}\""
     next
   }
 
