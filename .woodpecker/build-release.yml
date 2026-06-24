@@ -121,6 +121,9 @@ steps:
 
   build-and-push:
     image: woodpeckerci/plugin-kaniko
+    environment:
+      # Force HTTP/1.1; HTTP/2 makes registry pushes crawl.
+      GODEBUG: http2client=0
     settings:
       registry:
         from_secret: DOCKER_REGISTRY
@@ -133,8 +136,10 @@ steps:
       dockerfile: llama.cpp/.devops/cuda.Dockerfile
       target: server
       extra_opts: --custom-platform=linux/amd64
-      cache: true
-      cache_repo: llama-cpp/buildcache-${CUDA_SUFFIX}-amd64
+      # Disabled: doubled the upload and failed with MANIFEST_INVALID. sccache
+      # still caches compiles.
+      cache: false
+      # cache_repo: llama-cpp/buildcache-${CUDA_SUFFIX}-amd64
       env_file: .kaniko.env
       build_args_from_env:
         - BUILD_DATE
